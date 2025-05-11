@@ -1,4 +1,23 @@
-package PACKAGE_NAME;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class GameState {
+    private final ConcurrentMap<UUID, Player> players = new ConcurrentHashMap<>();
+
+    public void addPlayer(UUID id, String username, double x, double y) {
+        players.put(id, new Player(id, username, x, y));
+        System.out.println("Added " + username + " (" + id + ")");
+    }
+
+    public void updatePosition(UUID id, double x, double y) {
+        Player p = players.get(id);
+        if (p != null) {
+            p.setPosition(x, y);
+        }
+    }
+
+    public List<Player> getPlayers() {
+        return new ArrayList<>(players.values());
+    }
 }

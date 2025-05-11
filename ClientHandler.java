@@ -3,63 +3,76 @@ import java.net.*;
 import java.util.*;
 
 public class ClientHandler implements Runnable {
-    private final Socket clientSocket;
-    private final Server.GameState gameState;
-    private final UUID playerId = UUID.randomUUID();
+    private final Socket      socket;
+    private final GameState   state;
+    private UUID   playerId;
+    private String username;
     private PrintWriter out;
     private BufferedReader in;
 
-    public ClientHandler(Socket socket, Server.GameState gameState) {
-        this.clientSocket = socket;
-        this.gameState    = gameState;
+    public ClientHandler(Socket socket, GameState state) {
+        this.socket = socket;
+        this.state  = state;
     }
 
     @Override
     public void run() {
         try {
-            in  = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            out = new PrintWriter(clientSocket.getOutputStream(), true);
+            in  = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new PrintWriter(socket.getOutputStream(), true);
 
-            // 1) Login: Username abfragen
-            out.println("ENTER_USERNAME");
-            String username = in.readLine();
-            gameState.addPlayer(playerId, username);
-
-            // 2) Sofort ersten State an alle senden
+            // --- Registration ---
+            out.println("ENTER_REGISTER");
+            String reg = in.readLine();
+            if (reg != null && reg.startsWith("REGISTER:")) {
+                String[] parts = reg.split(":", 3);
+                playerId = UUID.fromString(parts[1]);
+                username = parts[2];
+            } else {
+                playerId = UUID.randomUUID();
+                username = reg != null ? reg : "unknown";
+            }
+            // spawn in random place server‐seitig
+            double spawnX = new Random().nextDouble()*1000;
+            double spawnY = new Random().nextDouble()*750;
+            state.addPlayer(playerId, username, spawnX, spawnY);
             broadcastState();
 
-            // 3) Fortlaufend Status-Updates verarbeiten
+            // --- Main Loop: handle POSITION messages ---
             String line;
             while ((line = in.readLine()) != null) {
-                if (line.startsWith("STATUS:")) {
-                    String status = line.substring("STATUS:".length());
-                    gameState.updateStatus(playerId, status);
+                if (line.startsWith("POSITION:")) {
+                    // Format "POSITION:<uuid>:<x>,<y>"
+                    String[] m = line.split(":", 3);
+                    UUID   id = UUID.fromString(m[1]);
+                    String[] xy = m[2].split(",",2);
+                    double x = Double.parseDouble(xy[0]);
+                    double y = Double.parseDouble(xy[1]);
+                    state.updatePosition(id, x, y);
                     broadcastState();
-                } else {
-                    System.out.println("Unknown message from " + playerId + ": " + line);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            try { clientSocket.close(); } catch (IOException ignored) {}
+            try { socket.close(); } catch (IOException ignored){}
         }
     }
 
-    /**
-     * Sendet an alle verbundenen Clients den vollständigen Lobby-Zustand
-     */
     private void broadcastState() {
-        List<Player> players = gameState.getPlayers();
+        List<Player> all = state.getPlayers();
         synchronized (Server.handlers) {
-            for (ClientHandler handler : Server.handlers) {
-                handler.out.println("STATE_UPDATE");
-                for (Player p : players) {
-                    handler.out.println(p.getUsername() + "|" + p.getCurrentStatus());
+            for (ClientHandler h : Server.handlers) {
+                h.out.println("STATE_UPDATE");
+                for (Player p : all) {
+                    h.out.println(
+                            p.getId() + "|" +
+                                    p.getUsername() + "|" +
+                                    p.getX() + "," + p.getY()
+                    );
                 }
-                handler.out.println("END_UPDATE");
+                h.out.println("END_UPDATE");
             }
         }
-        System.out.println("Broadcasted state to all clients");
     }
 }

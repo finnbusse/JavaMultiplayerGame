@@ -1,54 +1,49 @@
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 
 public class Server {
+    static final List<ClientHandler> handlers =
+            Collections.synchronizedList(new ArrayList<>());
     private static final int PORT = 12345;
-    private final GameState gameState = new GameState();
+    private final GameState state = new GameState();
     private final ExecutorService pool = Executors.newCachedThreadPool();
-    // Liste aller Handler für Broadcasts
-    static final List<ClientHandler> handlers = Collections.synchronizedList(new ArrayList<>());
 
     public static void main(String[] args) {
-        new Server().start();
-    }
-
-    public void start() {
-        System.out.println("Server started on port " + PORT);
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            while (true) {
-                Socket clientSocket = serverSocket.accept();
-                ClientHandler handler = new ClientHandler(clientSocket, gameState);
-                handlers.add(handler);
-                pool.execute(handler);
-            }
+        try {
+            Server server = new Server();
+            server.printLocalIPs();
+            server.start();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    /** Hält den Zustand aller Spieler */
-    static class GameState {
-        private final ConcurrentMap<UUID, Player> players = new ConcurrentHashMap<>();
-
-        public void addPlayer(UUID id, String username) {
-            Player p = new Player(id, username);
-            players.put(id, p);
-            System.out.println("Added player: " + username + " (" + id + ")");
-        }
-
-        public void updateStatus(UUID id, String status) {
-            Player p = players.get(id);
-            if (p != null) {
-                p.setCurrentStatus(status);
-                System.out.println("Updated " + p.getUsername() + " → " + status);
+    /** Findet alle non-loopback IPv4-Adressen und druckt sie */
+    private void printLocalIPs() throws SocketException {
+        Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+        while (nets.hasMoreElements()) {
+            NetworkInterface ni = nets.nextElement();
+            if (ni.isLoopback() || !ni.isUp()) continue;
+            for (InetAddress addr : Collections.list(ni.getInetAddresses())) {
+                if (addr instanceof Inet4Address) {
+                    System.out.println("Listening on "
+                            + addr.getHostAddress() + ":" + PORT);
+                }
             }
         }
+    }
 
-        public List<Player> getPlayers() {
-            return new ArrayList<>(players.values());
+    public void start() throws IOException {
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+            System.out.println("Server gestartet, wartet auf Clients...");
+            while (true) {
+                Socket client = serverSocket.accept();
+                ClientHandler h = new ClientHandler(client, state);
+                handlers.add(h);
+                pool.execute(h);
+            }
         }
     }
 }

@@ -1,44 +1,28 @@
 import java.util.UUID;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Repräsentiert einen Spieler mit ID, Namen und beliebig erweiterbaren Zusatzdaten.
+ * Repräsentiert einen Spieler – reine Datenklasse ohne Grafik.
  */
 public class Player {
-    private final UUID id;
+    private final UUID   id;
     private final String username;
-    private String currentStatus = "";
-    private final Map<String, Object> extra = new ConcurrentHashMap<>();
+    private double       x, y;
 
-    public Player(UUID id, String username) {
-        this.id = id;
+    public Player(UUID id, String username, double x, double y) {
+        this.id       = id;
         this.username = username;
+        this.x        = x;
+        this.y        = y;
     }
 
-    public UUID getId() {
-        return id;
-    }
+    public UUID   getId()       { return id; }
+    public String getUsername(){ return username; }
+    public double getX()        { return x; }
+    public double getY()        { return y; }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public String getCurrentStatus() {
-        return currentStatus;
-    }
-
-    public void setCurrentStatus(String status) {
-        this.currentStatus = status;
-    }
-
-    /** Beliebige Zusatzdaten abspeichern */
-    public void putExtra(String key, Object value) {
-        extra.put(key, value);
-    }
-
-    /** Zusatzdaten auslesen */
-    public Object getExtra(String key) {
-        return extra.get(key);
+    /** Setzt die exakte Position (für Server-Updates). */
+    public void setPosition(double x, double y) {
+        this.x = x;
+        this.y = y;
     }
 }
