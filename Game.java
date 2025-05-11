@@ -1,55 +1,51 @@
-import sas.*;                // Shapes & Sprites: View, Rectangle, Tools :contentReference[oaicite:1]{index=1}
+import sas.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 
 public class Game {
-    // Server-Konfiguration
-    private static final String SERVER_IP   = "0.0.0.0"; // bindet an alle Interfaces
+    // basic server config
+    private static final String SERVER_IP   = "192.168.178.33"; // lokale ip
     private static final int    SERVER_PORT = 12345;
 
-    // Lokaler Spieler
+    // config für eigenen player
     private final UUID   playerId = UUID.randomUUID();
     private final String username;
 
-    // Netzwerk
+    // socket und so netzwerk
     private Socket        socket;
     private PrintWriter   out;
     private BufferedReader in;
 
     private View view;
 
-    // Model & Shape-Objekte
+    // referenzieren der model und shape objektee
     private final ConcurrentMap<UUID, Player> players = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, Rectangle> shapes = new ConcurrentHashMap<>();
 
     public Game(String username) {
         this.username = username;
 
-        // 1) Fenster öffnen (einzige View-Instanz)
         view = new View(1024, 768, "tolles online game");
 
-        // 2) Server verbinden & Registrierung
         connectToServer();
 
-        // 3) Spawn-Position zufällig ermitteln und senden
         double startX = Tools.randomNumber(0, 1000);
         double startY = Tools.randomNumber(0, 750);
         sendPosition(startX, startY);
 
-        // 4) Eigenes Model & Shape anlegen
         players.put(playerId, new Player(playerId, username, startX, startY));
         Rectangle ownFigure = new Rectangle(startX, startY, 50, 50);
         shapes.put(playerId, ownFigure);
 
-        // 5) Thread: Server-Updates empfangen
+        // thread abkoppeln um parallel die aktuellen player positionen zu empfaangenn
         new Thread(this::receiveUpdates).start();
 
-        // 6) Game-Loop: Input verarbeiten
+
+
         while (true) {
-            handleInput();
-            // kein explizites render nötig, Shapes zeichnen sich automatisch :contentReference[oaicite:2]{index=2}
+            startGame();
             try { Thread.sleep(16); } catch (InterruptedException ignored) {}
         }
     }
@@ -69,7 +65,8 @@ public class Game {
     }
 
     private String getLocalIp() throws SocketException {
-        // erste non-loopback IPv4 zurückgeben
+
+        // erste non-loopback ipv4 zurückgeben falls ip nd definiert
         for (NetworkInterface ni : Collections.list(NetworkInterface.getNetworkInterfaces())) {
             if (!ni.isUp() || ni.isLoopback()) continue;
             for (InetAddress addr : Collections.list(ni.getInetAddresses())) {
@@ -89,7 +86,7 @@ public class Game {
             while ((line = in.readLine()) != null) {
                 if ("STATE_UPDATE".equals(line)) {
                     while (!(line = in.readLine()).equals("END_UPDATE")) {
-                        // foormat: uuid|username|x,y (-> als duble)
+                        // formaat: uuid|username|x,y (-> als double)
                         String[] parts = line.split("\\|", 3);
                         UUID   id = UUID.fromString(parts[0]);
                         String name = parts[1];
@@ -97,12 +94,12 @@ public class Game {
                         double x = Double.parseDouble(xy[0]);
                         double y = Double.parseDouble(xy[1]);
 
-                        // Model aktualisieren
+                        // spieler modell aktualisieren
                         Player p = players.get(id);
                         if (p == null) {
                             p = new Player(id, name, x, y);
                             players.put(id, p);
-                            // neues Shape anlegen
+                            // neues rectangle je spieler -> die anderen spieler werden lokal bei jedem gerendert und NICHT(!!) über player klasse
                             Rectangle remoteFigure = new Rectangle(x, y, 50, 50);
                             shapes.put(id, remoteFigure);
                         } else {
@@ -117,7 +114,7 @@ public class Game {
         }
     }
 
-    private void handleInput() {
+    private void startGame() {
         double dx = 0, dy = 0;
         if (view.keyUpPressed())    dy = -5;
         if (view.keyDownPressed())  dy = +5;

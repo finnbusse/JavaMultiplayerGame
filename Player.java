@@ -1,8 +1,5 @@
 import java.util.UUID;
 
-/**
- * Repräsentiert einen Spieler – reine Datenklasse ohne Grafik.
- */
 public class Player {
     private final UUID   id;
     private final String username;
@@ -20,7 +17,6 @@ public class Player {
     public double getX()        { return x; }
     public double getY()        { return y; }
 
-    /** Setzt die exakte Position (für Server-Updates). */
     public void setPosition(double x, double y) {
         this.x = x;
         this.y = y;

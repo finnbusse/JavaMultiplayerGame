@@ -20,7 +20,7 @@ public class Server {
         }
     }
 
-    /** Findet alle non-loopback IPv4-Adressen und druckt sie */
+    // lokale ipv4s finden und in die console printen -> für client zum verbinden
     private void printLocalIPs() throws SocketException {
         Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
         while (nets.hasMoreElements()) {
@@ -37,7 +37,7 @@ public class Server {
 
     public void start() throws IOException {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Server gestartet, wartet auf Clients...");
+            System.out.println("Started, waiting for clients...");
             while (true) {
                 Socket client = serverSocket.accept();
                 ClientHandler h = new ClientHandler(client, state);

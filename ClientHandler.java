@@ -21,7 +21,7 @@ public class ClientHandler implements Runnable {
             in  = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
-            // --- Registration ---
+            // registrierung auf dem server
             out.println("ENTER_REGISTER");
             String reg = in.readLine();
             if (reg != null && reg.startsWith("REGISTER:")) {
@@ -32,13 +32,13 @@ public class ClientHandler implements Runnable {
                 playerId = UUID.randomUUID();
                 username = reg != null ? reg : "unknown";
             }
-            // spawn in random place server‐seitig
+            // an random punkt im view spawnen
             double spawnX = new Random().nextDouble()*1000;
             double spawnY = new Random().nextDouble()*750;
             state.addPlayer(playerId, username, spawnX, spawnY);
             broadcastState();
 
-            // --- Main Loop: handle POSITION messages ---
+            // !!wichtigstes : hier die positions updates empfangen und folglich verarbeiten
             String line;
             while ((line = in.readLine()) != null) {
                 if (line.startsWith("POSITION:")) {
