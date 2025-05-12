@@ -20,7 +20,7 @@ public class Server {
         }
     }
 
-    // lokale ipv4s finden und in die console printen -> für client zum verbinden
+    // lokale ipv4s finden und in die console printen -> für client zum verbindenn
     private void printLocalIPs() throws SocketException {
         Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
         while (nets.hasMoreElements()) {

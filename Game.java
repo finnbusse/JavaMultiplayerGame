@@ -5,8 +5,8 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class Game {
-    // basic server config
-    private static final String SERVER_IP   = "192.168.178.33"; // lokale ip
+    // basic server configuration für client
+    private static final String SERVER_IP   = "2.241.164.126"; // lokale ip
     private static final int    SERVER_PORT = 12345;
 
     // config für eigenen player
@@ -52,7 +52,7 @@ public class Game {
 
     private void connectToServer() {
         try {
-            socket = new Socket(getLocalIp(), SERVER_PORT);
+            socket = new Socket(SERVER_IP, SERVER_PORT);
             out    = new PrintWriter(socket.getOutputStream(), true);
             in     = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             if ("ENTER_REGISTER".equals(in.readLine())) {
@@ -88,13 +88,21 @@ public class Game {
                     while (!(line = in.readLine()).equals("END_UPDATE")) {
                         // formaat: uuid|username|x,y (-> als double)
                         String[] parts = line.split("\\|", 3);
-                        UUID   id = UUID.fromString(parts[0]);
+                        UUID id = UUID.fromString(parts[0]);
+
+
+                        // ursprüngliches geruckle bei online-spiel entfernen: synchronisation des eigenen spielers hier nicht notwendig
+                        if (!playerId.equals(id)) {
+
+
+
+
                         String name = parts[1];
                         String[] xy = parts[2].split(",", 2);
                         double x = Double.parseDouble(xy[0]);
                         double y = Double.parseDouble(xy[1]);
 
-                        // spieler modell aktualisieren
+                        // spieler modell aktualisieren und in ConcurrentMap rein packen
                         Player p = players.get(id);
                         if (p == null) {
                             p = new Player(id, name, x, y);
@@ -106,6 +114,9 @@ public class Game {
                             p.setPosition(x, y);
                             shapes.get(id).moveTo(x, y);
                         }
+
+
+                        }
                     }
                 }
             }
@@ -116,9 +127,9 @@ public class Game {
 
     private void startGame() {
         double dx = 0, dy = 0;
-        if (view.keyUpPressed())    dy = -5;
-        if (view.keyDownPressed())  dy = +5;
-        if (view.keyLeftPressed())  dx = -5;
+        if (view.keyUpPressed()) dy = -5;
+        if (view.keyDownPressed()) dy = +5;
+        if (view.keyLeftPressed()) dx = -5;
         if (view.keyRightPressed()) dx = +5;
 
         if (dx != 0 || dy != 0) {
