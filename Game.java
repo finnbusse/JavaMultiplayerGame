@@ -58,7 +58,7 @@ public class Game {
             if ("ENTER_REGISTER".equals(in.readLine())) {
                 out.println("REGISTER:" + playerId + ":" + username);
             }
-            System.out.println("Connected to server at " + getLocalIp() + ":" + SERVER_PORT);
+            System.out.println("Connected to server at " + SERVER_IP + ":" + SERVER_PORT);
         } catch (IOException e) {
             e.printStackTrace();
         }
