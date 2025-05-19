@@ -123,7 +123,7 @@ public class Game {
                 }
             }
         } catch (IOException e) {
-            System.out.println("Verbindung zum Server verloren");
+            System.out.println("Connection to server lost");
         }
     }
 
