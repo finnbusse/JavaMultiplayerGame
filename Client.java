@@ -6,6 +6,10 @@ public class Client {
     private static final String SERVER_IP   = "95.119.141.178";
     private static final int    SERVER_PORT = 12345;
 
+
+
+    // klasse nur für test und debug zwecke
+
     private String username;
     private String currentStatus = "";
     private Socket socket;

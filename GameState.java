@@ -3,7 +3,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class GameState {
+
     private final ConcurrentMap<UUID, Player> players = new ConcurrentHashMap<>();
+
+
+    // game state verwaltet die einzelnen Player objekte, zugeordnet zur UUID in einer ConcurrentMap
+
 
     public void addPlayer(UUID id, String username, double x, double y) {
         players.put(id, new Player(id, username, x, y));

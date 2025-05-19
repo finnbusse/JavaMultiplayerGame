@@ -10,6 +10,10 @@ public class Server {
     private final GameState state = new GameState();
     private final ExecutorService pool = Executors.newCachedThreadPool();
 
+
+
+    // server stellt verbindung zu den Game clients her
+
     public static void main(String[] args) {
         try {
             Server server = new Server();

@@ -127,12 +127,16 @@ public class Game {
         }
     }
 
+
+    // hier spiel intigrieren!
+
     private void startGame() {
         double dx = 0, dy = 0;
         if (view.keyUpPressed()) dy = -5;
         if (view.keyDownPressed()) dy = +5;
         if (view.keyLeftPressed()) dx = -5;
         if (view.keyRightPressed()) dx = +5;
+        if (view.keyPressed(' ')) dx = +10;
 
         if (dx != 0 || dy != 0) {
             Player ownPlayer = players.get(playerId);
@@ -141,6 +145,12 @@ public class Game {
             sendPosition(ownPlayer.getX(), ownPlayer.getY());
         }
     }
+
+
+
+
+
+    // nur für intellij benötigt, um game klasse als programm auszuführen
 
     public static void main(String[] args) {
         new Game(args.length > 0 ? args[0] : "Player");

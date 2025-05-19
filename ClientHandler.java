@@ -2,6 +2,9 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+
+// client handler verarbeitet die beim server ankommenden positionen, speichert sie und gibt sie weiter
+
 public class ClientHandler implements Runnable {
     private final Socket socket;
     private final GameState state;
@@ -22,6 +25,8 @@ public class ClientHandler implements Runnable {
             out = new PrintWriter(socket.getOutputStream(), true);
 
             // registrierung auf dem server
+
+
             out.println("ENTER_REGISTER");
             String reg = in.readLine();
             if (reg != null && reg.startsWith("REGISTER:")) {
@@ -33,8 +38,12 @@ public class ClientHandler implements Runnable {
                 username = reg != null ? reg : "unknown";
             }
             // an random punkt im view spawnen
+
+
             double spawnX = new Random().nextDouble()*1000;
             double spawnY = new Random().nextDouble()*750;
+
+            // spieler dem gamestate hinzufügen
             state.addPlayer(playerId, username, spawnX, spawnY);
             broadcastState();
 
@@ -70,6 +79,9 @@ public class ClientHandler implements Runnable {
             } catch (IOException ignored){}
         }
     }
+
+
+    // der aktuelle zustand wird an alle clients gesendet, um player positions zu updaten
 
     private void broadcastState() {
         List<Player> all = state.getPlayers();
