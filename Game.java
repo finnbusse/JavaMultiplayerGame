@@ -6,7 +6,7 @@ import java.util.concurrent.*;
 
 public class Game {
     // basic server configuration für client
-    private static final String SERVER_IP   = "2.241.164.126"; // lokale ip
+    private static final String SERVER_IP   = "95.119.141.178"; // lokale ip
     private static final int    SERVER_PORT = 12345;
 
     // config für eigenen player
@@ -64,17 +64,6 @@ public class Game {
         }
     }
 
-    private String getLocalIp() throws SocketException {
-
-        // erste non-loopback ipv4 zurückgeben falls ip nd definiert
-        for (NetworkInterface ni : Collections.list(NetworkInterface.getNetworkInterfaces())) {
-            if (!ni.isUp() || ni.isLoopback()) continue;
-            for (InetAddress addr : Collections.list(ni.getInetAddresses())) {
-                if (addr instanceof Inet4Address) return addr.getHostAddress();
-            }
-        }
-        return "127.0.0.1";
-    }
 
     private void sendPosition(double x, double y) {
         out.println("POSITION:" + playerId + ":" + x + "," + y);
@@ -93,8 +82,6 @@ public class Game {
 
                         // ursprüngliches geruckle bei online-spiel entfernen: synchronisation des eigenen spielers hier nicht notwendig
                         if (!playerId.equals(id)) {
-
-
 
 
                         String name = parts[1];
