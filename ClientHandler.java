@@ -3,9 +3,9 @@ import java.net.*;
 import java.util.*;
 
 public class ClientHandler implements Runnable {
-    private final Socket      socket;
-    private final GameState   state;
-    private UUID   playerId;
+    private final Socket socket;
+    private final GameState state;
+    private UUID playerId;
     private String username;
     private PrintWriter out;
     private BufferedReader in;
@@ -53,7 +53,7 @@ public class ClientHandler implements Runnable {
                 }
             }
         } catch (IOException e) {
-            System.out.println("Connection to player " + username + " disconnected");
+            System.out.println("Connection to player " + username + " lost");
         } finally {
             try { 
                 // Spieler aus dem Spiel entfernen
