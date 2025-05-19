@@ -136,7 +136,6 @@ public class Game {
         if (view.keyDownPressed()) dy = +5;
         if (view.keyLeftPressed()) dx = -5;
         if (view.keyRightPressed()) dx = +5;
-        if (view.keyPressed(' ')) dx = +10;
 
         if (dx != 0 || dy != 0) {
             Player ownPlayer = players.get(playerId);
