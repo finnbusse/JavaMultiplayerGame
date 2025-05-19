@@ -17,6 +17,13 @@ public class GameState {
         }
     }
 
+    public void removePlayer(UUID id) {
+        Player removed = players.remove(id);
+        if (removed != null) {
+            System.out.println("Removed " + removed.getUsername() + " (" + id + ")");
+        }
+    }
+
     public List<Player> getPlayers() {
         return new ArrayList<>(players.values());
     }

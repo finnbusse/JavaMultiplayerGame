@@ -53,9 +53,21 @@ public class ClientHandler implements Runnable {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Verbindung mit Spieler " + username + " getrennt");
         } finally {
-            try { socket.close(); } catch (IOException ignored){}
+            try { 
+                // Spieler aus dem Spiel entfernen
+                if (playerId != null) {
+                    state.removePlayer(playerId);
+                }
+                // Handler aus der Liste entfernen
+                synchronized (Server.handlers) {
+                    Server.handlers.remove(this);
+                }
+                // Zustand an alle anderen Clients senden
+                broadcastState();
+                socket.close(); 
+            } catch (IOException ignored){}
         }
     }
 
@@ -63,15 +75,19 @@ public class ClientHandler implements Runnable {
         List<Player> all = state.getPlayers();
         synchronized (Server.handlers) {
             for (ClientHandler h : Server.handlers) {
-                h.out.println("STATE_UPDATE");
-                for (Player p : all) {
-                    h.out.println(
-                            p.getId() + "|" +
-                                    p.getUsername() + "|" +
-                                    p.getX() + "," + p.getY()
-                    );
+                try {
+                    h.out.println("STATE_UPDATE");
+                    for (Player p : all) {
+                        h.out.println(
+                                p.getId() + "|" +
+                                        p.getUsername() + "|" +
+                                        p.getX() + "," + p.getY()
+                        );
+                    }
+                    h.out.println("END_UPDATE");
+                } catch (Exception e) {
+                    // Ignoriere Fehler beim Senden an einzelne Clients
                 }
-                h.out.println("END_UPDATE");
             }
         }
     }

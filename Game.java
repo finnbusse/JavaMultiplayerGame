@@ -74,41 +74,56 @@ public class Game {
             String line;
             while ((line = in.readLine()) != null) {
                 if ("STATE_UPDATE".equals(line)) {
+                    // Erstelle eine Liste der aktuellen Spieler-IDs vom Server
+                    Set<UUID> receivedPlayerIds = new HashSet<>();
+                    
                     while (!(line = in.readLine()).equals("END_UPDATE")) {
                         // formaat: uuid|username|x,y (-> als double)
                         String[] parts = line.split("\\|", 3);
                         UUID id = UUID.fromString(parts[0]);
-
+                        receivedPlayerIds.add(id);
 
                         // ursprüngliches geruckle bei online-spiel entfernen: synchronisation des eigenen spielers hier nicht notwendig
                         if (!playerId.equals(id)) {
+                            String name = parts[1];
+                            String[] xy = parts[2].split(",", 2);
+                            double x = Double.parseDouble(xy[0]);
+                            double y = Double.parseDouble(xy[1]);
 
-
-                        String name = parts[1];
-                        String[] xy = parts[2].split(",", 2);
-                        double x = Double.parseDouble(xy[0]);
-                        double y = Double.parseDouble(xy[1]);
-
-                        // spieler modell aktualisieren und in ConcurrentMap rein packen
-                        Player p = players.get(id);
-                        if (p == null) {
-                            p = new Player(id, name, x, y);
-                            players.put(id, p);
-                            // neues rectangle je spieler -> die anderen spieler werden lokal bei jedem gerendert und NICHT(!!) über player klasse
-                            Rectangle remoteFigure = new Rectangle(x, y, 50, 50);
-                            shapes.put(id, remoteFigure);
-                        } else {
-                            p.setPosition(x, y);
-                            shapes.get(id).moveTo(x, y);
+                            // spieler modell aktualisieren und in ConcurrentMap rein packen
+                            Player p = players.get(id);
+                            if (p == null) {
+                                p = new Player(id, name, x, y);
+                                players.put(id, p);
+                                // neues rectangle je spieler -> die anderen spieler werden lokal bei jedem gerendert und NICHT(!!) über player klasse
+                                Rectangle remoteFigure = new Rectangle(x, y, 50, 50);
+                                shapes.put(id, remoteFigure);
+                            } else {
+                                p.setPosition(x, y);
+                                shapes.get(id).moveTo(x, y);
+                            }
                         }
-
-
+                    }
+                    
+                    // Entferne Spieler, die nicht mehr in der Aktualisierung enthalten sind
+                    Set<UUID> toRemove = new HashSet<>();
+                    for (UUID id : players.keySet()) {
+                        if (!receivedPlayerIds.contains(id) && !id.equals(playerId)) {
+                            toRemove.add(id);
+                        }
+                    }
+                    
+                    for (UUID id : toRemove) {
+                        players.remove(id);
+                        Rectangle shape = shapes.remove(id);
+                        if (shape != null) {
+                            view.remove(shape);
                         }
                     }
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Verbindung zum Server verloren");
         }
     }
 
