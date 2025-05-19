@@ -53,7 +53,7 @@ public class ClientHandler implements Runnable {
                 }
             }
         } catch (IOException e) {
-            System.out.println("Verbindung mit Spieler " + username + " getrennt");
+            System.out.println("Connection to player " + username + " disconnected");
         } finally {
             try { 
                 // Spieler aus dem Spiel entfernen
