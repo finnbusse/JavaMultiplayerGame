@@ -1,14 +1,25 @@
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import sas.*;
+
+import java.awt.Color;
 
 public class GameState {
 
     private final ConcurrentMap<UUID, Player> players = new ConcurrentHashMap<>();
 
-    private final ArrayList<Rectangle> landscape = new ArrayList<>();
+    private final ArrayList<Block> blocks = new ArrayList<>();
 
+    Block testBlock;
+
+
+    public GameState() {
+        blocks.add(new Block(50,50,50,50, Color.BLUE));
+        blocks.add(new Block(100,50,50,50, Color.BLUE));
+        blocks.add(new Block(150,50,50,50, Color.BLUE));
+        blocks.add(new Block(200,50,50,50, Color.BLUE));
+        blocks.add(new Block(250,50,50,50, Color.BLUE));
+    }
 
     // game state verwaltet die einzelnen Player objekte, zugeordnet zur UUID in einer ConcurrentMap
 
@@ -34,5 +45,9 @@ public class GameState {
 
     public List<Player> getPlayers() {
         return new ArrayList<>(players.values());
+    }
+
+    public List<Block> getBlocks() {
+        return new ArrayList<>(blocks);
     }
 }

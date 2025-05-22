@@ -62,6 +62,15 @@ public class Game {
                 out.println("REGISTER:" + playerId + ":" + username);
             }
             System.out.println("Connected to server at " + SERVER_IP + ":" + SERVER_PORT);
+
+
+
+            // !TODO Landschaft empfangen
+            if ("LANDSCAPE_BLOCKS".equals(in.readLine())) {
+                System.out.println("Landscape blocks received");
+            }
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }

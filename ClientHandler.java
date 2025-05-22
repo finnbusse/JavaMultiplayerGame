@@ -48,7 +48,7 @@ public class ClientHandler implements Runnable {
 
             // spieler dem gamestate hinzufügen
             state.addPlayer(playerId, username, spawnX, spawnY);
-            broadcastState();
+            broadcastState(true);
 
             // !!wichtigstes : hier die positions updates empfangen und folglich verarbeiten
             String line;
@@ -61,7 +61,7 @@ public class ClientHandler implements Runnable {
                     double x = Double.parseDouble(xy[0]);
                     double y = Double.parseDouble(xy[1]);
                     state.updatePosition(id, x, y);
-                    broadcastState();
+                    broadcastState(false);
                 }
             }
         } catch (IOException e) {
@@ -77,7 +77,7 @@ public class ClientHandler implements Runnable {
                     Server.handlers.remove(this);
                 }
                 // Zustand an alle anderen Clients senden
-                broadcastState();
+                broadcastState(false);
                 socket.close(); 
             } catch (IOException ignored){}
         }
@@ -86,11 +86,32 @@ public class ClientHandler implements Runnable {
 
     // der aktuelle zustand wird an alle clients gesendet, um player positions zu updaten
 
-    private void broadcastState() {
+    private void broadcastState(boolean includeBlocks) {
         List<Player> all = state.getPlayers();
+
+        List<Block> blocks = state.getBlocks();
+
         synchronized (Server.handlers) {
             for (ClientHandler h : Server.handlers) {
                 try {
+
+                    // !TODO Bloecke der Landschaft senden!
+
+                    if (includeBlocks) {
+                        h.out.println("LANDSCAPE_BLOCKS");
+                        for (Block b : blocks) {
+                            h.out.println(
+                                    b.getX() + "," + b.getY() + "," +
+                                            b.getWidth() + "," + b.getHeight() + "," +
+                                            b.getColor().getRed() + "," + b.getColor().getGreen() + "," + b.getColor().getBlue()
+                            );
+                        }
+                        h.out.println("END_LANDSCAPE_BLOCKS");
+                    }
+
+
+
+
                     h.out.println("STATE_UPDATE");
                     for (Player p : all) {
                         h.out.println(
