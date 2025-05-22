@@ -1,10 +1,13 @@
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import sas.*;
 
 public class GameState {
 
     private final ConcurrentMap<UUID, Player> players = new ConcurrentHashMap<>();
+
+    private final ArrayList<Rectangle> landscape = new ArrayList<>();
 
 
     // game state verwaltet die einzelnen Player objekte, zugeordnet zur UUID in einer ConcurrentMap

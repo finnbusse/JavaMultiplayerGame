@@ -43,6 +43,8 @@ public class Server {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Started, waiting for clients...");
             while (true) {
+
+                // Verbindungen annehmen
                 Socket client = serverSocket.accept();
                 ClientHandler h = new ClientHandler(client, state);
                 handlers.add(h);

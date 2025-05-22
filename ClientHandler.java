@@ -4,14 +4,17 @@ import java.util.*;
 
 
 // client handler verarbeitet die beim server ankommenden positionen, speichert sie und gibt sie weiter
+// jeweils ein clienthandler objekt wird für jeden spieler erzeugt
+
+
 
 public class ClientHandler implements Runnable {
     private final Socket socket;
     private final GameState state;
     private UUID playerId;
     private String username;
-    private PrintWriter out;
-    private BufferedReader in;
+    private PrintWriter out; // gegenstück zum Bufferedreader; schreibt/ sendet daten an bufferedreader objekte
+    private BufferedReader in; // liest eingehende werte aus daten stream
 
     public ClientHandler(Socket socket, GameState state) {
         this.socket = socket;
@@ -24,8 +27,8 @@ public class ClientHandler implements Runnable {
             in  = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
-            // registrierung auf dem server
 
+            // registrierung auf dem server
 
             out.println("ENTER_REGISTER");
             String reg = in.readLine();
@@ -65,7 +68,7 @@ public class ClientHandler implements Runnable {
             System.out.println("Connection to player " + username + " lost");
         } finally {
             try { 
-                // Spieler aus dem Spiel entfernen
+                // Spieler aus dem Spiel entfernen, wenn die verbindung getrennt wurde
                 if (playerId != null) {
                     state.removePlayer(playerId);
                 }

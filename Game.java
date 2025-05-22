@@ -24,6 +24,7 @@ public class Game {
     private final ConcurrentMap<UUID, Player> players = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, Rectangle> shapes = new ConcurrentHashMap<>();
 
+
     public Game(String username) {
         this.username = username;
 
@@ -43,6 +44,8 @@ public class Game {
         new Thread(this::receiveUpdates).start();
 
 
+        // anderer thread für das game
+        // while true nur temporär
 
         while (true) {
             startGame();
@@ -105,7 +108,7 @@ public class Game {
                         }
                     }
                     
-                    // Entferne Spieler, die nicht mehr in der Aktualisierung enthalten sind
+                    // Entferne Spieler, die nicht mehr in der Aktualisierung enthalten sind (offline/ disconnect)
                     Set<UUID> toRemove = new HashSet<>();
                     for (UUID id : players.keySet()) {
                         if (!receivedPlayerIds.contains(id) && !id.equals(playerId)) {
