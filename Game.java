@@ -6,7 +6,7 @@ import java.util.concurrent.*;
 
 public class Game {
     // basic server configuration für client
-    private static final String SERVER_IP   = "95.119.141.178"; // lokale ip
+    private static final String SERVER_IP   = "62.143.72.137"; // lokale ip
     private static final int    SERVER_PORT = 12345;
 
     // config für eigenen player
