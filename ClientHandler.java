@@ -59,7 +59,7 @@ public class ClientHandler implements Runnable {
                             broadcastState(false);
                         }
                     } catch (Exception e) {
-                        System.out.println("Fehler beim Parsen der JSON-Nachricht: " + e.getMessage());
+                        System.out.println("Error parsing JSON message: " + e.getMessage());
                     }
                 }
             }
