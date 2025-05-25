@@ -64,6 +64,7 @@ public class ClientHandler implements Runnable {
                     broadcastState(false);
                 }
             }
+
         } catch (IOException e) {
             System.out.println("Connection to player " + username + " lost");
         } finally {
