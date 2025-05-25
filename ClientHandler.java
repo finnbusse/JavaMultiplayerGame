@@ -1,35 +1,31 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
-
-
-// client handler verarbeitet die beim server ankommenden positionen, speichert sie und gibt sie weiter
-// jeweils ein clienthandler objekt wird für jeden spieler erzeugt
-
-
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
 
 public class ClientHandler implements Runnable {
     private final Socket socket;
     private final GameState state;
     private UUID playerId;
     private String username;
-    private PrintWriter out; // gegenstück zum Bufferedreader; schreibt/ sendet daten an bufferedreader objekte
-    private BufferedReader in; // liest eingehende werte aus daten stream
+    private PrintWriter out;
+    private BufferedReader in;
+    private final Gson gson = new Gson();
 
     public ClientHandler(Socket socket, GameState state) {
         this.socket = socket;
-        this.state  = state;
+        this.state = state;
     }
 
     @Override
     public void run() {
         try {
-            in  = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
-
-            // registrierung auf dem server
-
+            // Registrierung auf dem Server
             out.println("ENTER_REGISTER");
             String reg = in.readLine();
             if (reg != null && reg.startsWith("REGISTER:")) {
@@ -40,36 +36,39 @@ public class ClientHandler implements Runnable {
                 playerId = UUID.randomUUID();
                 username = reg != null ? reg : "unknown";
             }
-            // an random punkt im view spawnen
 
+            // An random Punkt im View spawnen
+            double spawnX = new Random().nextDouble() * 1000;
+            double spawnY = new Random().nextDouble() * 750;
 
-            double spawnX = new Random().nextDouble()*1000;
-            double spawnY = new Random().nextDouble()*750;
-
-            // spieler dem gamestate hinzufügen
+            // Spieler dem GameState hinzufügen
             state.addPlayer(playerId, username, spawnX, spawnY);
             broadcastState(true);
 
-            // !!wichtigstes : hier die positions updates empfangen und folglich verarbeiten
+            // Positions-Updates empfangen und verarbeiten
             String line;
             while ((line = in.readLine()) != null) {
-                if (line.startsWith("POSITION:")) {
-                    // Format "POSITION:<uuid>:<x>,<y>"
-                    String[] m = line.split(":", 3);
-                    UUID   id = UUID.fromString(m[1]);
-                    String[] xy = m[2].split(",",2);
-                    double x = Double.parseDouble(xy[0]);
-                    double y = Double.parseDouble(xy[1]);
-                    state.updatePosition(id, x, y);
-                    broadcastState(false);
+                if (line.startsWith("{")) {
+                    try {
+                        JsonObject jsonMessage = gson.fromJson(line, JsonObject.class);
+                        if (jsonMessage.has("type") && "position".equals(jsonMessage.get("type").getAsString())) {
+                            UUID id = UUID.fromString(jsonMessage.get("id").getAsString());
+                            double x = jsonMessage.get("x").getAsDouble();
+                            double y = jsonMessage.get("y").getAsDouble();
+                            state.updatePosition(id, x, y);
+                            broadcastState(false);
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Fehler beim Parsen der JSON-Nachricht: " + e.getMessage());
+                    }
                 }
             }
 
         } catch (IOException e) {
             System.out.println("Connection to player " + username + " lost");
         } finally {
-            try { 
-                // Spieler aus dem Spiel entfernen, wenn die verbindung getrennt wurde
+            try {
+                // Spieler aus dem Spiel entfernen, wenn die Verbindung getrennt wurde
                 if (playerId != null) {
                     state.removePlayer(playerId);
                 }
@@ -79,49 +78,54 @@ public class ClientHandler implements Runnable {
                 }
                 // Zustand an alle anderen Clients senden
                 broadcastState(false);
-                socket.close(); 
-            } catch (IOException ignored){}
+                socket.close();
+            } catch (IOException ignored) {}
         }
     }
 
-
-    // der aktuelle zustand wird an alle clients gesendet, um player positions zu updaten
-
     private void broadcastState(boolean includeBlocks) {
         List<Player> all = state.getPlayers();
-
         List<Block> blocks = state.getBlocks();
 
         synchronized (Server.handlers) {
             for (ClientHandler h : Server.handlers) {
                 try {
-
-                    // !TODO Bloecke der Landschaft senden!
-
-                    if (includeBlocks) {
-                        h.out.println("LANDSCAPE_BLOCKS");
-                        for (Block b : blocks) {
-                            h.out.println(
-                                    b.getX() + "," + b.getY() + "," +
-                                            b.getWidth() + "," + b.getHeight() + "," +
-                                            b.getColor().getRed() + "," + b.getColor().getGreen() + "," + b.getColor().getBlue()
-                            );
-                        }
-                        h.out.println("END_LANDSCAPE_BLOCKS");
-                    }
-
-
-
-
-                    h.out.println("STATE_UPDATE");
+                    JsonObject gameState = new JsonObject();
+                    
+                    // Spielerdaten hinzufügen
+                    JsonArray playersArray = new JsonArray();
                     for (Player p : all) {
-                        h.out.println(
-                                p.getId() + "|" +
-                                        p.getUsername() + "|" +
-                                        p.getX() + "," + p.getY()
-                        );
+                        JsonObject playerObj = new JsonObject();
+                        playerObj.addProperty("id", p.getId().toString());
+                        playerObj.addProperty("username", p.getUsername());
+                        playerObj.addProperty("x", p.getX());
+                        playerObj.addProperty("y", p.getY());
+                        playersArray.add(playerObj);
                     }
-                    h.out.println("END_UPDATE");
+                    gameState.add("players", playersArray);
+                    
+                    // Blöcke hinzufügen, falls benötigt
+                    if (includeBlocks) {
+                        JsonArray blocksArray = new JsonArray();
+                        for (Block b : blocks) {
+                            JsonObject blockObj = new JsonObject();
+                            blockObj.addProperty("x", b.getX());
+                            blockObj.addProperty("y", b.getY());
+                            blockObj.addProperty("width", b.getWidth());
+                            blockObj.addProperty("height", b.getHeight());
+                            
+                            JsonObject colorObj = new JsonObject();
+                            colorObj.addProperty("r", b.getColor().getRed());
+                            colorObj.addProperty("g", b.getColor().getGreen());
+                            colorObj.addProperty("b", b.getColor().getBlue());
+                            blockObj.add("color", colorObj);
+                            
+                            blocksArray.add(blockObj);
+                        }
+                        gameState.add("blocks", blocksArray);
+                    }
+                    
+                    h.out.println(gson.toJson(gameState));
                 } catch (Exception e) {
                     // Ignoriere Fehler beim Senden an einzelne Clients
                 }

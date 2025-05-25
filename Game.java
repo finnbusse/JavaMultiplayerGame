@@ -3,27 +3,31 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
+import java.awt.Color;
 
 public class Game {
-    // basic server configuration für client
-    private static final String SERVER_IP   = "62.143.72.137"; // lokale ip
-    private static final int    SERVER_PORT = 12345;
+    // Basic server configuration für client
+    private static final String SERVER_IP = "192.168.178.33"; // lokale IP
+    private static final int SERVER_PORT = 12345;
 
-    // config für eigenen player
-    private final UUID   playerId = UUID.randomUUID();
+    // Config für eigenen player
+    private final UUID playerId = UUID.randomUUID();
     private final String username;
 
-    // socket und so netzwerk
-    private Socket        socket;
-    private PrintWriter   out;
+    // Socket und Netzwerk
+    private Socket socket;
+    private PrintWriter out;
     private BufferedReader in;
+    private final Gson gson = new Gson();
 
-    private View view;
+    private final View view;
 
-    // referenzieren der model und shape objektee
+    // Referenzieren der Model und Shape Objekte
     private final ConcurrentMap<UUID, Player> players = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, Rectangle> shapes = new ConcurrentHashMap<>();
-
 
     public Game(String username) {
         this.username = username;
@@ -40,13 +44,10 @@ public class Game {
         Rectangle ownFigure = new Rectangle(startX, startY, 50, 50);
         shapes.put(playerId, ownFigure);
 
-        // thread abkoppeln um parallel die aktuellen player positionen zu empfaangenn
+        // Thread abkoppeln um parallel die aktuellen Player Positionen zu empfangen
         new Thread(this::receiveUpdates).start();
 
-
-        // anderer thread für das game
-        // while true nur temporär
-
+        // Game-Loop
         while (true) {
             startGame();
             try { Thread.sleep(16); } catch (InterruptedException ignored) {}
@@ -56,92 +57,98 @@ public class Game {
     private void connectToServer() {
         try {
             socket = new Socket(SERVER_IP, SERVER_PORT);
-            out    = new PrintWriter(socket.getOutputStream(), true);
-            in     = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new PrintWriter(socket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             if ("ENTER_REGISTER".equals(in.readLine())) {
                 out.println("REGISTER:" + playerId + ":" + username);
             }
             System.out.println("Connected to server at " + SERVER_IP + ":" + SERVER_PORT);
-
-
-
-            // !TODO Landschaft empfangen
-            if ("LANDSCAPE_BLOCKS".equals(in.readLine())) {
-                System.out.println("Landscape blocks received");
-            }
-
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-
     private void sendPosition(double x, double y) {
-        out.println("POSITION:" + playerId + ":" + x + "," + y);
+        JsonObject positionUpdate = new JsonObject();
+        positionUpdate.addProperty("type", "position");
+        positionUpdate.addProperty("id", playerId.toString());
+        positionUpdate.addProperty("x", x);
+        positionUpdate.addProperty("y", y);
+        out.println(gson.toJson(positionUpdate));
     }
 
     private void receiveUpdates() {
         try {
             String line;
             while ((line = in.readLine()) != null) {
-                if ("STATE_UPDATE".equals(line)) {
-                    // Erstelle eine Liste der aktuellen Spieler-IDs vom Server
-                    Set<UUID> receivedPlayerIds = new HashSet<>();
-                    
-                    while (!(line = in.readLine()).equals("END_UPDATE")) {
-                        // formaat: uuid|username|x,y (-> als double)
-                        String[] parts = line.split("\\|", 3);
-                        UUID id = UUID.fromString(parts[0]);
-                        receivedPlayerIds.add(id);
-
-                        // ursprüngliches geruckle bei online-spiel entfernen: synchronisation des eigenen spielers hier nicht notwendig
-                        if (!playerId.equals(id)) {
-                            String name = parts[1];
-                            String[] xy = parts[2].split(",", 2);
-                            double x = Double.parseDouble(xy[0]);
-                            double y = Double.parseDouble(xy[1]);
-
-                            // spieler modell aktualisieren und in ConcurrentMap rein packen
-                            Player p = players.get(id);
-                            if (p == null) {
-                                p = new Player(id, name, x, y);
-                                players.put(id, p);
-                                // neues rectangle je spieler -> die anderen spieler werden lokal bei jedem gerendert und NICHT(!!) über player klasse
-                                Rectangle remoteFigure = new Rectangle(x, y, 50, 50);
-                                shapes.put(id, remoteFigure);
-                            } else {
-                                p.setPosition(x, y);
-                                shapes.get(id).moveTo(x, y);
+                if (line.startsWith("{")) {
+                    try {
+                        JsonObject gameState = gson.fromJson(line, JsonObject.class);
+                        
+                        // Erstelle eine Liste der aktuellen Spieler-IDs vom Server
+                        Set<UUID> receivedPlayerIds = new HashSet<>();
+                        
+                        // Verarbeite die Spieler
+                        if (gameState.has("players")) {
+                            JsonArray playersArray = gameState.getAsJsonArray("players");
+                            
+                            for (int i = 0; i < playersArray.size(); i++) {
+                                JsonObject playerObj = playersArray.get(i).getAsJsonObject();
+                                UUID id = UUID.fromString(playerObj.get("id").getAsString());
+                                receivedPlayerIds.add(id);
+                                
+                                // Synchronisation des eigenen Spielers hier nicht notwendig
+                                if (!playerId.equals(id)) {
+                                    String name = playerObj.get("username").getAsString();
+                                    double x = playerObj.get("x").getAsDouble();
+                                    double y = playerObj.get("y").getAsDouble();
+                                    
+                                    // Spieler Modell aktualisieren und in ConcurrentMap packen
+                                    Player p = players.get(id);
+                                    if (p == null) {
+                                        p = new Player(id, name, x, y);
+                                        players.put(id, p);
+                                        // Neues Rechteck je Spieler -> die anderen Spieler werden lokal bei jedem gerendert und NICHT(!!) über die Player Klasse
+                                        Rectangle remoteFigure = new Rectangle(x, y, 50, 50);
+                                        shapes.put(id, remoteFigure);
+                                        // view.add(remoteFigure); // Füge das Rechteck zum View hinzu
+                                    } else {
+                                        p.setPosition(x, y);
+                                        shapes.get(id).moveTo(x, y);
+                                    }
+                                }
                             }
                         }
-                    }
-                    
-                    // Entferne Spieler, die nicht mehr in der Aktualisierung enthalten sind (offline/ disconnect)
-                    Set<UUID> toRemove = new HashSet<>();
-                    for (UUID id : players.keySet()) {
-                        if (!receivedPlayerIds.contains(id) && !id.equals(playerId)) {
-                            toRemove.add(id);
+                        
+                        // Entferne Spieler, die nicht mehr in der Aktualisierung enthalten sind (offline/ disconnect)
+                        Set<UUID> toRemove = new HashSet<>();
+                        for (UUID id : players.keySet()) {
+                            if (!receivedPlayerIds.contains(id) && !id.equals(playerId)) {
+                                toRemove.add(id);
+                            }
                         }
-                    }
-                    
-                    for (UUID id : toRemove) {
-                        players.remove(id);
-                        Rectangle shape = shapes.remove(id);
-                        if (shape != null) {
-                            view.remove(shape);
+                        
+                        for (UUID id : toRemove) {
+                            players.remove(id);
+                            Rectangle shape = shapes.remove(id);
+                            if (shape != null) {
+                                view.remove(shape);
+                            }
                         }
+                        
+                    } catch (Exception e) {
+                        System.err.println("Error processing JSON: " + line);
+                        e.printStackTrace();
                     }
                 }
             }
         } catch (IOException e) {
             System.out.println("Connection to server lost");
+            e.printStackTrace();
         }
     }
 
-
-    // hier spiel intigrieren!
-
+    // Hier Spiel integrieren
     private void startGame() {
         double dx = 0, dy = 0;
         if (view.keyUpPressed()) dy = -5;
@@ -151,18 +158,16 @@ public class Game {
 
         if (dx != 0 || dy != 0) {
             Player ownPlayer = players.get(playerId);
-            ownPlayer.setPosition(ownPlayer.getX() + dx, ownPlayer.getY() + dy);
-            shapes.get(playerId).move(dx, dy);
-            sendPosition(ownPlayer.getX(), ownPlayer.getY());
+            double newX = ownPlayer.getX() + dx;
+            double newY = ownPlayer.getY() + dy;
+
+            ownPlayer.setPosition(newX, newY);
+            shapes.get(playerId).moveTo(newX, newY);
+            sendPosition(newX, newY);
         }
     }
 
-
-
-
-
-    // nur für intellij benötigt, um game klasse als programm auszuführen
-
+    // Nur für IntelliJ benötigt, um die Game-Klasse als Programm auszuführen
     public static void main(String[] args) {
         new Game(args.length > 0 ? args[0] : "Player");
     }

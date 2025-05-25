@@ -3,7 +3,7 @@ import java.net.*;
 import java.util.*;
 
 public class Client {
-    private static final String SERVER_IP   = "95.119.141.178";
+    private static final String SERVER_IP   = "192.168.178.33";
     private static final int    SERVER_PORT = 12345;
 
 
