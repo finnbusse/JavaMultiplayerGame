@@ -10,7 +10,7 @@ import java.awt.Color;
 
 public class Game {
     // Basic server configuration für client
-    private static final String SERVER_IP = "192.168.178.33"; // lokale IP
+    private static final String SERVER_IP = "static.finnbusse.de"; // lokale IP
     private static final int SERVER_PORT = 12345;
 
     // Config für eigenen player
