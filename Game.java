@@ -9,7 +9,7 @@ import com.google.gson.JsonArray;
 import java.awt.Color;
 
 public class Game {
-    // Basic server configuration für client
+    // Basic server configuration für den client
     private static final String SERVER_IP = "loc01.finnbusse.de"; // lokale IP
     private static final int SERVER_PORT = 12345;
 
@@ -169,7 +169,7 @@ public class Game {
         if (view.keyDownPressed()) dy = +5;
         if (view.keyLeftPressed()) dx = -5;
         if (view.keyRightPressed()) dx = +5;
-        if (view.keyPressed(' ')) summonAttack(players.get(playerId).getX() + dx, players.get(playerId).getY() + dy);
+        if (view.keyPressed(' ')) draw(players.get(playerId).getX() + dx, players.get(playerId).getY() + dy);
 
         if (dx != 0 || dy != 0) {
             Player ownPlayer = players.get(playerId);
@@ -182,8 +182,8 @@ public class Game {
         }
     }
 
-    private void summonAttack(double pX, double pY) {
-        Circle attack = new Circle(pX, pY, 10, Color.BLACK);
+    private void draw(double pX, double pY) {
+        Circle draw = new Circle(pX, pY, 10, Color.BLACK);
     }
 
     // Nur für IntelliJ benötigt, um die Game-Klasse als Programm auszuführen

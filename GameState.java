@@ -15,7 +15,7 @@ public class GameState {
 
     public GameState() {
 
-        blocks.add(new Block(100, 100, 100, 100, Color.RED));
+        blocks.add(new Block(100, 100, 100, 100, Color.WHITE));
 
     }
 
