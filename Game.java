@@ -10,7 +10,7 @@ import java.awt.Color;
 
 public class Game {
     // Basic server configuration für client
-    private static final String SERVER_IP = "static.finnbusse.de"; // lokale IP
+    private static final String SERVER_IP = "loc01.finnbusse.de"; // lokale IP
     private static final int SERVER_PORT = 12345;
 
     // Config für eigenen player
@@ -34,6 +34,8 @@ public class Game {
 
         view = new View(1024, 768, "tolles online game");
 
+        view.setBackgroundColor(Color.GREEN);
+
         connectToServer();
 
         double startX = Tools.randomNumber(0, 1000);
@@ -43,6 +45,18 @@ public class Game {
         players.put(playerId, new Player(playerId, username, startX, startY));
         Rectangle ownFigure = new Rectangle(startX, startY, 50, 50);
         shapes.put(playerId, ownFigure);
+        
+        // Erzeuge lokale Landschaft aus den Blöcken in GameState
+        GameState gameState = new GameState();
+        for (Block block : gameState.getBlocks()) {
+            Rectangle blockShape = new Rectangle(
+                block.getX(), 
+                block.getY(), 
+                block.getWidth(), 
+                block.getHeight(), 
+                block.getColor()
+            );
+        }
 
         // Thread abkoppeln um parallel die aktuellen Player Positionen zu empfangen
         new Thread(this::receiveUpdates).start();
@@ -155,6 +169,7 @@ public class Game {
         if (view.keyDownPressed()) dy = +5;
         if (view.keyLeftPressed()) dx = -5;
         if (view.keyRightPressed()) dx = +5;
+        if (view.keyPressed(' ')) summonAttack();
 
         if (dx != 0 || dy != 0) {
             Player ownPlayer = players.get(playerId);
@@ -165,6 +180,10 @@ public class Game {
             shapes.get(playerId).moveTo(newX, newY);
             sendPosition(newX, newY);
         }
+    }
+
+    private void summonAttack() {
+        Circle attack = new Circle(10, 10, 10, Color.BLACK);
     }
 
     // Nur für IntelliJ benötigt, um die Game-Klasse als Programm auszuführen

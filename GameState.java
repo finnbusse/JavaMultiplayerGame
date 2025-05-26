@@ -10,15 +10,12 @@ public class GameState {
 
     private final ArrayList<Block> blocks = new ArrayList<>();
 
-    Block testBlock;
+    //private final Ball ball;
 
 
     public GameState() {
-        blocks.add(new Block(50,50,50,50, Color.BLUE));
-        blocks.add(new Block(100,50,50,50, Color.BLUE));
-        blocks.add(new Block(150,50,50,50, Color.BLUE));
-        blocks.add(new Block(200,50,50,50, Color.BLUE));
-        blocks.add(new Block(250,50,50,50, Color.BLUE));
+        //ball = new Ball(155,155,50);
+
     }
 
     // game state verwaltet die einzelnen Player objekte, zugeordnet zur UUID in einer ConcurrentMap
