@@ -14,7 +14,9 @@ public class GameState {
 
 
     public GameState() {
-        //ball = new Ball(155,155,50);
+
+        blocks.add(new Block(100, 100, 100, 100, Color.RED));
+
 
     }
 

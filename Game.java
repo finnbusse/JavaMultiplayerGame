@@ -169,7 +169,7 @@ public class Game {
         if (view.keyDownPressed()) dy = +5;
         if (view.keyLeftPressed()) dx = -5;
         if (view.keyRightPressed()) dx = +5;
-        if (view.keyPressed(' ')) summonAttack();
+        if (view.keyPressed(' ')) summonAttack(players.get(playerId).getX() + dx, players.get(playerId).getY() + dy);
 
         if (dx != 0 || dy != 0) {
             Player ownPlayer = players.get(playerId);
@@ -182,8 +182,8 @@ public class Game {
         }
     }
 
-    private void summonAttack() {
-        Circle attack = new Circle(10, 10, 10, Color.BLACK);
+    private void summonAttack(double pX, double pY) {
+        Circle attack = new Circle(pX, pY, pX-pY, Color.BLACK);
     }
 
     // Nur für IntelliJ benötigt, um die Game-Klasse als Programm auszuführen
