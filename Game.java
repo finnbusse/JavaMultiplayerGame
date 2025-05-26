@@ -183,7 +183,7 @@ public class Game {
     }
 
     private void summonAttack(double pX, double pY) {
-        Circle attack = new Circle(pX, pY, pX-pY, Color.BLACK);
+        Circle attack = new Circle(pX, pY, 10, Color.BLACK);
     }
 
     // Nur für IntelliJ benötigt, um die Game-Klasse als Programm auszuführen
