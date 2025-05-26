@@ -17,7 +17,6 @@ public class GameState {
 
         blocks.add(new Block(100, 100, 100, 100, Color.RED));
 
-
     }
 
     // game state verwaltet die einzelnen Player objekte, zugeordnet zur UUID in einer ConcurrentMap
