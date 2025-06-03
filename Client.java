@@ -6,6 +6,9 @@ public class Client {
     private static final String SERVER_IP   = "192.168.178.33";
     private static final int    SERVER_PORT = 12345;
 
+    // Unique identifier for this client when registering
+    private final UUID playerId = UUID.randomUUID();
+
 
 
     // klasse nur für test und debug zwecke
@@ -28,10 +31,10 @@ public class Client {
             out    = new PrintWriter(socket.getOutputStream(), true);
             in     = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            if ("ENTER_USERNAME".equals(in.readLine())) {
+            if ("ENTER_REGISTER".equals(in.readLine())) {
                 System.out.print("Enter username: ");
                 username = scanner.nextLine();
-                out.println(username);
+                out.println("REGISTER:" + playerId + ":" + username);
             }
 
             new Thread(this::listenServer).start();
